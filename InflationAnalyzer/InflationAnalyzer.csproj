@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C4611B6D-6E76-4C28-92D1-1BE9750B6B9E}</ProjectGuid>
+    <ProjectGuid>{20E71DC5-2310-4487-88A6-E8E311052F6E}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>InflationAnalyzer</RootNamespace>
     <AssemblyName>InflationAnalyzer</AssemblyName>
