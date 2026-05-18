@@ -1,6 +1,8 @@
 ﻿using InflationAnalyzer.Models;
+using Microsoft.Win32;
 using OxyPlot;
 using OxyPlot.Series;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -11,8 +13,12 @@ namespace InflationAnalyzer
 {
     public partial class MainWindow : Window
     {
-        // Список данных по инфляции
+        // Основные данные
         private List<InflationData> inflationData =
+            new List<InflationData>();
+
+        // Прогнозные данные
+        private List<InflationData> forecastData =
             new List<InflationData>();
 
         public MainWindow()
@@ -20,94 +26,109 @@ namespace InflationAnalyzer
             InitializeComponent();
         }
 
-        // Загрузка CSV файла
+        // Загрузка TXT файла
         private void LoadButton_Click(
             object sender,
             RoutedEventArgs e)
         {
-            // Путь к CSV файлу
-            string filePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "Data",
-                "inflation.csv");
+            OpenFileDialog openFileDialog =
+                new OpenFileDialog();
 
-            // Проверка существования файла
-            if (!File.Exists(filePath))
+            openFileDialog.Filter =
+                "Text files (*.txt)|*.txt";
+
+            if (openFileDialog.ShowDialog() != true)
             {
-                MessageBox.Show(
-                    "CSV file not found!",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-
                 return;
             }
 
-            // Очистка списка
+            string filePath =
+                openFileDialog.FileName;
+
             inflationData.Clear();
 
-            // Чтение данных из CSV
-            var lines = File.ReadAllLines(filePath).Skip(1);
+            var lines =
+                File.ReadAllLines(filePath).Skip(1);
 
             foreach (var line in lines)
             {
                 var parts = line.Split(',');
 
-                inflationData.Add(new InflationData
-                {
-                    Year = int.Parse(parts[0]),
+                inflationData.Add(
+                    new InflationData
+                    {
+                        Year = int.Parse(parts[0]),
 
-                    Inflation = double.Parse(
-                        parts[1],
-                        CultureInfo.InvariantCulture)
-                });
+                        Inflation = double.Parse(
+                            parts[1],
+                            CultureInfo.InvariantCulture),
+
+                        ApartmentPrice = double.Parse(
+                            parts[2],
+                            CultureInfo.InvariantCulture)
+                    });
             }
 
-            // Вывод данных в таблицу
-            InflationGrid.ItemsSource = inflationData;
+            // Вывод таблицы
+            InflationGrid.ItemsSource =
+                inflationData;
 
             // Построение графика
             DrawChart();
 
             MessageBox.Show(
-                "Data loaded successfully!",
-                "Information",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                "TXT file loaded successfully!");
         }
 
-        // Метод построения графика
+        // Построение графика
         private void DrawChart()
         {
-            // Создание модели графика
             var plotModel = new PlotModel
             {
                 Title = "Inflation Dynamics"
             };
 
-            // Создание линии графика
-            var series = new LineSeries
+            // Реальные данные
+            var realSeries = new LineSeries
             {
-                Title = "Inflation (%)"
+                Title = "Real Inflation"
             };
 
-            // Добавление точек на график
             foreach (var item in inflationData)
             {
-                series.Points.Add(
+                realSeries.Points.Add(
                     new DataPoint(
                         item.Year,
                         item.Inflation));
             }
 
-            // Добавление линии
-            plotModel.Series.Add(series);
+            plotModel.Series.Add(realSeries);
 
-            // Отображение графика
+            // Прогноз
+            if (forecastData.Count > 0)
+            {
+                var forecastSeries =
+                    new LineSeries
+                    {
+                        Title = "Forecast"
+                    };
+
+                foreach (var item in forecastData)
+                {
+                    forecastSeries.Points.Add(
+                        new DataPoint(
+                            item.Year,
+                            item.Inflation));
+                }
+
+                plotModel.Series.Add(
+                    forecastSeries);
+            }
+
             PlotView.Model = plotModel;
         }
 
-        // Метод прогнозирования инфляции
+        // Прогноз методом скользящей средней
         private void ForecastButton_Click(
             object sender,
             RoutedEventArgs e)
@@ -116,25 +137,106 @@ namespace InflationAnalyzer
             if (inflationData.Count == 0)
             {
                 MessageBox.Show(
-                    "Load CSV first!");
+                    "Load TXT file first!");
 
                 return;
             }
 
-            // Последнее значение инфляции
-            var lastValue = inflationData.Last();
+            // Проверка года
+            if (!int.TryParse(
+                YearsTextBox.Text,
+                out int targetYear))
+            {
+                MessageBox.Show(
+                    "Enter valid year!");
 
-            // Простейший прогноз
-            double forecast =
-                lastValue.Inflation + 0.5;
+                return;
+            }
 
-            // Вывод прогноза
+            forecastData.Clear();
+
+            var lastItem =
+                inflationData.Last();
+
+            int currentYear =
+                lastItem.Year;
+
+            double apartmentPrice =
+                lastItem.ApartmentPrice;
+
+            // Проверка будущего года
+            if (targetYear <= currentYear)
+            {
+                MessageBox.Show(
+                    "Enter future year!");
+
+                return;
+            }
+
+            // Список значений инфляции
+            List<double> inflationValues =
+                inflationData
+                .Select(x => x.Inflation)
+                .ToList();
+
+            // Прогнозирование
+            for (int year = currentYear + 1;
+                 year <= targetYear;
+                 year++)
+            {
+                int count =
+                    inflationValues.Count;
+
+                // Скользящая средняя за 3 года
+                double movingAverage =
+                    (inflationValues[count - 1] +
+                     inflationValues[count - 2] +
+                     inflationValues[count - 3]) / 3;
+
+                inflationValues.Add(
+                    movingAverage);
+
+                // Прогноз цены квартиры
+                apartmentPrice +=
+                    apartmentPrice *
+                    (movingAverage / 100);
+
+                forecastData.Add(
+                    new InflationData
+                    {
+                        Year = year,
+
+                        Inflation =
+                            Math.Round(
+                                movingAverage,
+                                2),
+
+                        ApartmentPrice =
+                            Math.Round(
+                                apartmentPrice,
+                                0)
+                    });
+            }
+
+            // Обновление таблицы
+            InflationGrid.ItemsSource =
+                null;
+
+            InflationGrid.ItemsSource =
+                forecastData;
+
+            // Обновление графика
+            DrawChart();
+            //
+            // Финальная цена квартиры
+            double finalPrice =
+                forecastData.Last()
+                .ApartmentPrice;
+
             MessageBox.Show(
-                $"Forecast inflation for " +
-                $"{lastValue.Year + 1}: " +
-                $"{forecast:F1}%",
-
-                "Forecast");
+                $"Forecast completed!\n\n" +
+                $"Apartment price in {targetYear}: " +
+                $"{finalPrice:F0} RUB");
         }
     }
 }
