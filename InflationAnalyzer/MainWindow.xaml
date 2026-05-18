@@ -6,49 +6,93 @@
         xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
         Title="Inflation Analyzer"
-        Height="700"
-        Width="1000">
+        Height="750"
+        Width="1200"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F7FA">
 
-    <Grid Margin="10">
+    <Grid Margin="15">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="220"/>
+            <RowDefinition Height="250"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal"
-                    Margin="0 0 0 10">
+        <!-- Верхняя панель -->
+        <Border Background="White"
+                CornerRadius="12"
+                Padding="15"
+                Margin="0 0 0 15">
 
-            <Button x:Name="LoadButton"
-                    Content="Load CSV"
-                    Width="150"
-                    Height="35"
-                    Margin="0 0 10 0"
-                    Click="LoadButton_Click"/>
+            <WrapPanel VerticalAlignment="Center">
 
-            <Button x:Name="ForecastButton"
-                    Content="Forecast"
-                    Width="150"
-                    Height="35"
-                    Click="ForecastButton_Click"/>
+                <Button x:Name="LoadButton"
+                        Content="Load TXT"
+                        Width="130"
+                        Height="40"
+                        Margin="0 0 15 0"
+                        FontWeight="SemiBold"
+                        Background="#4F46E5"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Click="LoadButton_Click"/>
 
-        </StackPanel>
+                <TextBlock Text="Forecast until year:"
+                           VerticalAlignment="Center"
+                           Margin="0 0 10 0"
+                           FontWeight="SemiBold"/>
 
-        <GroupBox Header="Inflation Data Table"
-                  Grid.Row="1"
-                  Margin="0 0 0 10">
+                <TextBox x:Name="YearsTextBox"
+                         Width="90"
+                         Height="35"
+                         Text="2040"
+                         Margin="0 20 15 0"/>
 
-            <DataGrid x:Name="InflationGrid"
-                      AutoGenerateColumns="True"/>
-        </GroupBox>
+                <Button x:Name="ForecastButton"
+                        Content="Forecast"
+                        Width="130"
+                        Height="40"
+                        FontWeight="SemiBold"
+                        Background="#10B981"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Click="ForecastButton_Click"/>
 
-        <GroupBox Header="Inflation Chart"
-                  Grid.Row="2">
+            </WrapPanel>
+        </Border>
 
-            <oxy:PlotView x:Name="PlotView"/>
+        <!-- Таблица -->
+        <Border Grid.Row="1"
+                Background="White"
+                CornerRadius="12"
+                Padding="10"
+                Margin="0 0 0 15">
 
-        </GroupBox>
+            <GroupBox Header="Inflation Data Table"
+                      FontWeight="SemiBold">
+
+                <DataGrid x:Name="InflationGrid"
+                          AutoGenerateColumns="True"
+                          RowHeight="30"
+                          FontSize="13"/>
+
+            </GroupBox>
+        </Border>
+
+        <!-- График -->
+        <Border Grid.Row="2"
+                Background="White"
+                CornerRadius="12"
+                Padding="10">
+
+            <GroupBox Header="Inflation Chart"
+                      FontWeight="SemiBold">
+
+                <oxy:PlotView x:Name="PlotView"/>
+
+            </GroupBox>
+        </Border>
 
     </Grid>
 </Window>
